@@ -1,0 +1,10 @@
+{
+  "name": "mpackage-2",
+  "version": "1.0.0",
+  "author": "Roman Khoruuzhiy",
+  "main": "main.js",
+  "exports": {
+    "import": "./main.mjs",
+    "require": "./main.js"
+  }
+}
