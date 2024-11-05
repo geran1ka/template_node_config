@@ -1,6 +1,6 @@
 {
-  "name": "template-project",
-  "version": "1.0.0",
+  "name": "templatestart",
+  "version": "1.0.1",
   "description": "template node js project",
   "main": "index.js",
   "scripts": {
@@ -8,12 +8,12 @@
     "dev": "nodemon index",
     "lint": "eslint . --fix"
   },
-  "type": "module",
+  "type": "commonjs",
   "keywords": [
     "node",
     "app"
   ],
-  "author": "Maksim Leskin <maksim.leskin@methed.ru>",
+  "author": "Roman Khoruzhy <roman.khoruzhy@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.13.0",
@@ -24,7 +24,11 @@
     "nodemon": "^3.1.7",
     "prettier": "3.3.3"
   },
-  "overrides": {
-    "eslint": "^9.13.0"
+  "dependencies": {
+    "async": "^3.2.6",
+    "axios": "^1.7.7",
+    "fs-extra": "^11.2.0",
+    "moment": "^2.30.1",
+    "uuid": "^11.0.2"
   }
 }
