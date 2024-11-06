@@ -1,12 +1,38 @@
-console.log('Hello NPM');
+import { EventEmitter } from 'node:events';
 
-const bc = 2;
+class Timer extends EventEmitter {
+  constructor() {
+    super();
+    this.idSetInterval = null;
+  }
 
-console.log(bc);
+  start() {
+    let tick = 1;
+    this.idSetInterval = setInterval(() => {
+      this.emit('tick', tick);
+      tick++;
 
-let c =
-  'Елена прекрасная' +
-  'премудрая' +
-  'ввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввввв';
+      if (tick > 10) clearInterval(this.idSetInterval);
+    }, 1000);
+  }
 
-console.log(c);
+  remove() {
+    clearInterval(this.idSetInterval);
+  }
+
+  consoleOutput() {
+    this.addListener('tick', tick => {
+      console.log(`Tick - ${tick}`);
+    });
+  }
+}
+
+const timer = new Timer();
+
+timer.consoleOutput();
+
+timer.start();
+
+setTimeout(() => {
+  timer.remove();
+}, 8000);
