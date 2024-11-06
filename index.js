@@ -1,42 +1,39 @@
-import { remove } from 'fs-extra';
 import { EventEmitter } from 'node:events';
 
-class EE extends EventEmitter {}
+class EE extends EventEmitter {
+  sendMessage(username, message) {
+    this.emit('message', { username, message });
+  }
 
-const ee = new EE();
+  reciveMessage() {
+    this.addListener('message', ({ username, message }) => {
+      console.log(`${username}: ${message}`);
+    });
+  }
+}
 
-//
-ee.addListener('foo', x => {
-  console.log('Tick', x);
-});
+const chat = new EE();
 
-ee.on('foo3', x => {
-  console.log('on', x);
-});
+chat.reciveMessage();
 
-// вызов события единожды
-ee.once('foo1', x => {
-  console.log('once', x);
-});
+chat.sendMessage('Roma', 'Добрый вечер, Александр!');
 
-ee.on('error', error => {
-  console.log(error);
-});
+chat.sendMessage('Roma', 'Как у Вас дела?');
 
-ee.emit('error', new Error(`Ошибка`));
+setTimeout(() => {
+  chat.sendMessage(
+    'Roma',
+    'Я тут пытаюсь сделать задачу №2, еще на курсе по JS мне неочень зашла тема с ООП.',
+  );
+}, 3000);
 
-// ee.error();
+setTimeout(() => {
+  chat.sendMessage('Roma', 'Чувствую я встрял (((!');
+}, 6000);
 
-ee.emit('foo', 'Рома');
-
-ee.emit('foo1', { name: 'Рома' });
-
-ee.emit('foo3', ['Рома']);
-
-console.log('------------------------');
-
-ee.emit('foo', 'Рома');
-
-ee.emit('foo1', { name: 'Рома' });
-
-ee.emit('foo3', ['Рома']);
+setTimeout(() => {
+  chat.sendMessage(
+    'Roma',
+    'Нужно ли было в данную программу встраивать обработчик события error?',
+  );
+}, 9000);
