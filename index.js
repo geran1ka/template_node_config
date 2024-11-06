@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 
-class EE extends EventEmitter {
+class Chat extends EventEmitter {
   sendMessage(username, message) {
     this.emit('message', { username, message });
   }
@@ -12,7 +12,7 @@ class EE extends EventEmitter {
   }
 }
 
-const chat = new EE();
+const chat = new Chat();
 
 chat.reciveMessage();
 
