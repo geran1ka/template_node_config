@@ -1,0 +1,49 @@
+
+Description 
+The Serial port input function block sends data via a serial link to fixed address memory locations in the smart relay. 
+Access 
+The  function is accessible from the FBD function bar. 
+Inputs/Outputs 
+The function delivers eight Integer-type outputs named input 1 to input 8. These outputs enable the application programmed in the smart relay to use the data stored in the selected fixed address memory locations. 
+Parameters 
+Select a range of eight addresses from the Parameters window. The other address ranges are available are as follows: 
+1 - 8 
+9 - 16 
+17 - 24 
+The Serial Link 
+The serial link is configured as follows: 
+dialog speed: 115 kilobauds, 
+format: 7 bits, even parity, 1 stop bit, 
+The Write Frame and the Response 
+Below is the write frame to send to the smart relay: 
+Beginning delimiter: " : " 
+Slave address: 0x01 
+Write command: 0x10 
+Data address: 0x00 00 FF xx 
+xx is a number between 0x00 and 0x17 inclusively, corresponding to the address of the data to write less 1. 
+Number of bytes: 0xnn 
+This is the number of data to write. Each value is made up of two bytes. 
+Data to write: 0xd1H d1L d2H ... dnnL 
+There are the 0xnn bytes to write. 
+Checksum: 0xcc 
+This is the completed sum increased by 2, of the bytes between the slave address and the last of the date to write. 
+End delimiter: " CR " " LF " 
+The smart relay response is structured as follows: 
+Beginning delimiter: " : " 
+Slave address: 0x01 
+Write command: 0x10 
+Data address: 0x00 00 FF xx 
+Number of bytes: 0xnn 
+Checksum: 0xcc 
+This is the completed sum increased by 2, of the bytes between the slave address and the byte number. 
+End delimiter: " CR " " LF " 
+For example 
+Write to the 3 address the 16-bit value 8569: 
+8569 corresponds to 0x2179 in hexadecimal format. 
+Checksum: 0x01+0x10 + 0x00 + 0x00+ 0xFF + 0x02 + 0x02 + 0x21 + 0x79 = 0x1AE of which complement increased by 2 gives for a 0x53 byte 
+" : " 0x01 0x10 0x00 0x00 0xFF 0x02 0x02 0x21 0x79 0x53 " CR " " LF " 
+The frame in the format above is used to calculate the checksum. Except for the delimiters, each byte is sent as two ASCII characters. Which gives: 
+0x3A 0x30 0x31 0x31 0x30 0x30 0x30 0x30 0x30 0x46 0x46 0x30 0x32 0x30 0x32 0x32 0x31 0x37 0x39 0x35 0x33 0x0D 0x0A 
+Smart relay response: 0x3A 0x30 0x31 0x31 0x30 0x30 0x30 0x30 0x30 0x46 0x46 0x30 0x32 0x30 0x32 0x45 0x44 0x0D 0x0A 
+Communication interruption 
+In the event of communication interruption, remove and then reapply power to the smart relay. 

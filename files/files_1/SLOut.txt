@@ -1,0 +1,43 @@
+Description 
+The Serial Port Output function block is used to send data stored in fixed addresses in the smart relay to other equipment via a serial link. 
+Access 
+The  function is accessible from the FBD function bar. 
+Inputs/Outputs 
+The function provides eight integer-type inputs. These inputs enable the application to write the data that must be sent to the fixed address memory locations. 
+Parameters 
+Select a range of eight addresses from the Parameters window. The other address ranges are available are as follows: 
+25 - 32 
+33 - 40 
+41 - 48 
+The Read Frame and the Response 
+The read frame to be sent to the smart relay is as follows: 
+Beginning delimiter: " : " 
+Slave address: 0x01 
+Read command: 0x03 
+Data address: 0x00 00 FF xx 
+xx is a number between 0x00 and 0x2F inclusively, corresponding to the address of the first data to read less 1. 
+Number of bytes: 0xnn 
+This is the number of data to read. Each value is made up of two bytes. 
+Checksum: 0xcc 
+This is the completed sum increased by 2, of the bytes between the slave address and the number of bytes. 
+End delimiter: " CR " " LF " 
+The smart relay response is structured as follows: 
+Beginning delimiter: " : " 
+Slave address: 0x01 
+Read command: 0x03 
+Number of bytes: 0xnn 
+Data read: 0xd1H d1L d2H ... dnnL 
+These are the 0xnn bytes read. 
+Checksum: 0xcc 
+This is the completed sum increased by 2, of the bytes between the slave address and the last of the data to read. 
+End delimiter: " CR " " LF " 
+Example 
+Read 5 16-bit data from address 17: 
+Hexadecimal frame before ASCII coding: 
+" : " 01 03 00 00 FF 10 0A E4 " CR " " LF " 
+Hexadecimal frame after ASCII coding: 
+3A 30 31 30 33 30 30 30 30 46 46 31 30 30 41 45 34 0D 0A 
+The response will be as follows if the five values equal 0: 
+3A 30 31 30 33 30 41 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 46 33 0D 0A 
+Communication interruption 
+In the event of communication interruption, remove and then reapply power to the smart relay. 
