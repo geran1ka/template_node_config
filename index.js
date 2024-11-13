@@ -1,76 +1,59 @@
-const getIsCyrillic = text => /[\u0400-\u04FF]/.test(text);
-
-const textToBuffer = (text, encoding) => {
+const textToBuffer = (str, encoding) => {
   try {
-    const isCyrillic = getIsCyrillic(text);
-
-    if (encoding === 'base64' || encoding === 'base64url') {
-      throw Error(`Кодировка ${encoding} не допустима для текста`);
-    }
-
-    if (
-      (isCyrillic && encoding === 'ascii') ||
-      (isCyrillic && encoding === 'latin1') ||
-      (isCyrillic && encoding === 'bynary') ||
-      (isCyrillic && encoding === 'hex')
-    ) {
-      throw Error(`Кодировка ${encoding} не совместима с кириллицей`);
-    }
-
-    return Buffer.from(text, encoding);
+    const enc = encoding.toString().toLowerCase();
+    return enc === 'utf-8' || enc === 'utf8'
+      ? Buffer.from(str, encoding)
+      : Buffer.from(str, 'utf8').toString(encoding);
   } catch (error) {
-    return `Ошибка во время кодирования файла - ${error}`;
-  } finally {
-    console.log('Скрипт кодирования завершен');
+    return `ВО время выполнения кодирования текста произошла ошибка: ${error}`;
   }
 };
 
 const bufferToText = (buffer, encoding) => {
   try {
-    if (Buffer.isBuffer(buffer)) {
-      return buffer.toString(encoding);
+    if (buffer.includes('TypeError')) {
+      throw new Error('TypeError');
     }
+    const enc = encoding.toString().toLowerCase();
+    return enc === 'utf-8' || enc === 'utf8'
+      ? buffer.toString('utf-8')
+      : Buffer.from(buffer, encoding).toString('utf-8');
   } catch (error) {
-    return `Ошибка во время декодирования файла - ${error}`;
-  } finally {
-    console.log('Скрипт Декодирование завершен');
+    return `ВО время выполнения декодирования текста произошла ошибка: ${error}`;
   }
 };
 
 const text = 'Привет мир!';
-const utf8Buffer = textToBuffer(text, 'utf-8');
-console.log('utf8Buffer: ', utf8Buffer || 'Ошибка кодирования');
+// const textOne = 'Hello world';
+// const text = 'Привет мир!';
 
-const decodeTextUtf8 = bufferToText(utf8Buffer, 'utf-8');
-console.log('decodeTextUtf8: ', decodeTextUtf8 || 'Ошибка декодирования');
+const customConsole = (str, code, type = 'decode') => {
+  if (code.includes('TypeError')) {
+    console.log('Ошибка во время выполнения скрипта');
+    return;
+  }
+  type === 'decode'
+    ? console.log(`${code} ---декодирован--> ${str}`)
+    : console.log(`${str} ---закодирован--> ${code}`);
+};
+console.log('-'.repeat(100));
+const base64Buffer = textToBuffer(text, 'base64');
+customConsole(text, base64Buffer, 'code');
+
+const decodeTextBase64 = bufferToText(base64Buffer, 'base64');
+customConsole(decodeTextBase64, base64Buffer);
 console.log('-'.repeat(100));
 
-const text2 = 'Привет мир!';
-const asciiBuffer = textToBuffer(text2, 'ascii');
-console.log('asciiBuffer: ', asciiBuffer || 'Ошибка кодирования');
+const utf864Buffer = textToBuffer(text, 'uTf-8');
+console.log('utf864Buffer: ', utf864Buffer);
 
-const decodeTextAscii = bufferToText(asciiBuffer, 'ascii');
-console.log('decodeTextAscii: ', decodeTextAscii || 'Ошибка декодирования');
-
+const decodeTextUtf8 = bufferToText(utf864Buffer, 'utf8');
+console.log('decodeTextUtf8: ', decodeTextUtf8);
 console.log('-'.repeat(100));
 
-const text3 = 'Hello world!';
+const utf16le64Buffer = textToBuffer(text, 'utf-16le');
+customConsole(text, utf16le64Buffer, 'code');
 
-const asciiBufferLatin = textToBuffer(text3, 'ascii');
-console.log('asciiBufferLatin: ', asciiBufferLatin);
-
-const decodeTextAsciiLarin = bufferToText(asciiBufferLatin, 'ascii');
-console.log(
-  'decodeTextAsciiLarin: ',
-  decodeTextAsciiLarin || 'Ошибка декодирования',
-);
-
+const decodeTextUtf16le = bufferToText(utf16le64Buffer, 'utf-16le');
+customConsole(decodeTextUtf16le, utf16le64Buffer);
 console.log('-'.repeat(100));
-
-const text4 = 'Hello world!';
-
-const binaryBuffer = textToBuffer(text4, 'binary');
-console.log('binaryBuffer: ', binaryBuffer);
-
-const decodeTextBinary = bufferToText(binaryBuffer, 'binary');
-console.log('decodeTextBinary: ', decodeTextBinary);
