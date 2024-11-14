@@ -1,26 +1,81 @@
-import { createReadStream, createWriteStream } from 'node:fs';
-import { readdir } from 'node:fs/promises';
+import { mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { exists } from 'fs-extra';
+import { effectGreyScale } from './modules/effectGreyScale.js';
+import { effectBlur } from './modules/effectBlur.js';
+import { effectGreyScaleBlur } from './modules/effectGreyScaleBlur.js';
+import { effectResize } from './modules/effectResize.js';
+import { pathFile } from './modules/pathFile.js';
+import { isDirectoryInput } from './modules/isDerectoryInput.js';
 
-const readDiretoryStream = async (pathDir, resultFile) => {
+const app = async (inputPath, outputPath, option = { resize: true }) => {
   try {
-    const wStream = createWriteStream(resultFile);
+    const isChek = await isDirectoryInput(inputPath);
 
-    const allReadFileDirectory = await readdir(pathDir);
-    for (const file of allReadFileDirectory) {
-      if (path.extname(file) === '.txt') {
-        console.log(`${file} с раширением ${path.extname(file)}`);
-        const rStream = createReadStream(`${pathDir}/${file}`);
-        wStream.write(`[${file}]\n`);
+    if (isChek && !(await exists(path.dirname(inputPath)))) {
+      throw new Error(`Директории ${inputPath} не существует`);
+    }
 
-        for await (const chunk of rStream) {
-          wStream.write(`${chunk}\n`);
+    if (!(await exists(outputPath))) {
+      mkdir(outputPath, { recursive: true });
+    }
+
+    if (isChek) {
+      const files = await readdir(inputPath);
+      for await (const file of files) {
+        const { filePath, output, fileExtension } = pathFile(
+          inputPath,
+          outputPath,
+          file,
+        );
+        if (option.resize) {
+          effectResize({ filePath, output, fileExtension });
+        }
+
+        if (option.blur) {
+          option.greyscale
+            ? effectGreyScaleBlur({ filePath, output, fileExtension })
+            : effectBlur({ filePath, output, fileExtension });
+        }
+
+        if (option.greyscale && !option.blur) {
+          effectGreyScale({ filePath, output, fileExtension });
         }
       }
+    } else {
+      const { fileName, output, fileExtension } = pathFile(
+        path.basename(inputPath),
+        outputPath,
+      );
+      if (option.resize) {
+        effectResize({ filePath: fileName, output, fileExtension });
+      }
+
+      if (option.blur) {
+        option.greyscale
+          ? effectGreyScaleBlur({ filePath: fileName, output, fileExtension })
+          : effectBlur({ filePath: fileName, output, fileExtension });
+      }
+
+      if (option.greyscale && !option.blur) {
+        effectGreyScale({ filePath: fileName, output, fileExtension });
+      }
     }
+
+    console.log('Скрипт успешно завершен');
+    return true;
   } catch (error) {
-    console.log(`Ошика: ${error}`);
+    console.log(`Ошибка во время выполнения скрипта: ${error}`);
   }
 };
 
-readDiretoryStream('./files', './result.txt');
+app('./file', './outputfiles/test', { greyscale: true, blur: true });
+
+app('./vulkan.jpg', './outputFilesEffectBlurGrayScale', {
+  greyscale: true,
+  blur: true,
+});
+app('./files', './outputFilesEffectResize');
+app('./files', './outputFilesEffectBlur', { blur: true });
+app('./files', './outputFilesEffectGreyScale', { greyscale: true });
+app('./files/test', './otput');
