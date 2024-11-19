@@ -1,25 +1,15 @@
 import readline from 'node:readline/promises';
 import process from 'node:process';
-
-// const rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout,
-//   prompt: '> ',
-// });
-
-// console.log('Hello, your name: ');
-// rl.prompt(); // вывод для приглашения ввода
-
-// rl.on('line', answer => {
-//   console.log(`Hello, ${answer}`);
-// rl.close(); //закрыть readline
-// });
+import { readFile } from 'node:fs/promises';
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
   prompt: '> ',
 });
+
+const data = JSON.parse(await readFile('./question.json'))[0];
+console.log('data: ', data);
 
 console.log('Write command');
 console.log('or help: ');
