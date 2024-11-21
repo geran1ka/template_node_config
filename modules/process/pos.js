@@ -1,3 +1,3 @@
-import { write } from './write.js';
+import { writeCustom } from './write.js';
 
-export const pos = (row, col) => write(`\x1b[${row};${col}H`);
+export const pos = (row, col) => writeCustom(`\x1b[${row};${col}H`);
