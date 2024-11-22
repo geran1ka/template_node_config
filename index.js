@@ -1,130 +1,236 @@
-import readline from 'readline/promises';
-import { clear } from './modules/process/clear.js';
-import { write, writeCustom } from './modules/process/write.js';
-import { pos } from './modules/process/pos.js';
-import { border, borderCustom, box } from './modules/process/box.js';
-import { getColorStr } from './modules/process/colors.js';
-import { declOfNum } from './modules/process/declOfNum.js';
+import readline from 'node:readline/promises';
 import { readText } from './modules/readText.js';
-import { forEach } from 'async';
+import { write } from './modules/process/write.js';
+import { declOfNum } from './modules/process/declOfNum.js';
+import { getColorStr } from './modules/process/colors.js';
+import { progress } from './modules/process/progress.js';
+import { outputQuestionAnswers } from './modules/process/outputQuestionAnswers.js.js';
 
 const app = async pathQuestion => {
   try {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-      prompt: '-->',
-    });
     const store = {
+      userName: '',
       current: 0,
-      correct: 0,
       questions: [],
-      incorrectAnswer: [],
-      qestion: {},
+      currentQuestion: {},
+      correctAnswers: [],
+      incorrectAnswers: [],
       isInvalidValue: false,
     };
 
-    store.questions = JSON.parse(await readText(pathQuestion));
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      prompt: '> ',
+    });
 
-    const outputAnswerOptions = options => {
-      if (Array.isArray(options) && options.length > 0) {
-        options.forEach((item, index) => {
-          write(getColorStr(`№${index + 1}. ${item}.`));
-        });
-      }
-    };
-
-    store.incorrectAnswer.push(
-      {
-        id: 1,
-        question: 'Что такое прототип (prototype) в JavaScript?',
-        options: [
-          'Объект, который используется для наследования свойств и методов',
-          'Метод массива, используемый для выполнения заданной функции для каждого элемента массива',
-          'Способ определения переменной, доступной только внутри функции',
-        ],
-        correctIndex: 0,
-      },
-      {
-        id: 3,
-        question: 'Что такое прототип (prototype) в JavaScript?',
-        options: [
-          'Объект, который используется для наследования свойств и методов',
-          'Метод массива, используемый для выполнения заданной функции для каждого элемента массива',
-          'Способ определения переменной, доступной только внутри функции',
-        ],
-        correctIndex: 0,
-      },
+    store.userName = await rl.question(
+      getColorStr('Введите свое имя: ', 'blue'),
     );
 
-    const getAnswer = async ({ limit }) => {
-      let answer = await rl.question(getColorStr('Ваш ответ: '), 'blue');
+    write(
+      getColorStr(
+        `Добро пожаловать в интеллектуально-развлекательную битву, ${store.userName}!`,
+        'whiteBright',
+      ),
+    );
+    write(getColorStr('Для начала игры введите команду start', 'whiteBright'));
+    write(getColorStr('или команду help: \n', 'whiteBright'));
 
-      if (isNaN(answer) || +answer < 1 || +answer > limit) {
-        pos(8, 0);
-        write(
-          getColorStr(
-            'Вы ввели не допустимое значение, пожалуйста повторите',
-            'red',
-          ),
-        );
-        return (answer = await getAnswer({ limit }));
-      } else {
-        return answer;
-      }
-    };
+    const getAnswerUser = async () =>
+      await rl.question(getColorStr('Введите ответ: ', 'blue'));
 
-    const options = [
-      'Объект, который используется для наследования свойств и методов',
-      'Метод массива, используемый для выполнения заданной функции для каждого элемента массива',
-      'Способ определения переменной, доступной только внутри функции',
-    ];
+    const start = async () => {
+      try {
+        store.questions = JSON.parse(await readText(pathQuestion));
 
-    console.log(store.incorrectAnswer.find(item => item.id === 2));
-    const progressBar = async ({ current, allQuestion, limit }) => {
-      clear();
-      box(borderCustom, 1, 0, 26, 7);
-      pos(2, 4);
-      write(`Вопросов: ${current} из ${allQuestion}`);
-      box(border, 3, 3, 22, 4);
+        if (store.questions.length > 0) {
+          for (let i = store.current; i < store.questions.length; i++) {
+            progress({
+              current: store.current,
+              allQuestion: store.questions.length,
+              store,
+            });
 
-      if (store.incorrectAnswer.length > 0) {
-        for (let i = 1; i < current; i++) {
-          pos(4, 3 + i);
-          if (store.incorrectAnswer.find(item => item.id === i)) {
-            write(borderCustom[7]);
-          } else {
-            write(borderCustom[6]);
+            store.currentQuestion = store.questions[i];
+
+            const { question, options, correctIndex } = store.questions[i];
+            outputQuestionAnswers({ numberQuestion: i, question, options });
+
+            const answer = await getAnswerUser({ options });
+            if (isNaN(answer) || +answer < 1 || +answer > options.length) {
+              store.isInvalidValue = true;
+              return start();
+            } else if (Number(answer) - 1 === correctIndex) {
+              store.isInvalidValue = false;
+              write(getColorStr('Правильный ответ\n', 'green'));
+              store.correctAnswers.push({
+                numberQuestion: i,
+                question,
+                options,
+                correctIndex,
+              });
+            } else {
+              write(getColorStr('Неправильный ответ\n', 'red'));
+              store.isInvalidValue = false;
+
+              store.incorrectAnswers.push({
+                numberQuestion: i,
+                options,
+                question,
+                correctIndex,
+                answerUser: Number(answer) - 1,
+              });
+            }
+
+            store.current++;
           }
+
+          progress({
+            current: store.current,
+            allQuestion: store.questions.length,
+            store,
+          });
+
+          write(getColorStr('----------КВИЗ завершен!----------', 'blue'));
+          write(
+            getColorStr(
+              `Вы ответили верно на ${declOfNum(store.correctAnswers.length, ['вопрос', 'вопроса', 'вопросов'])} из ${store.questions.length}.`,
+              'blue',
+            ),
+          );
+          write(
+            getColorStr(
+              'Что бы посмотреть, где были допущены ошибки, набирите команду "answerErr";',
+              'blue',
+            ),
+          );
+          write(
+            getColorStr(
+              'Что бы посмотреть на какие вопроосы Вы ответили верно, набирите команду "answer";',
+              'blue',
+            ),
+          );
+          write(
+            getColorStr(
+              'Для завершения приложения наберите команду "exit"!',
+              'blue',
+            ),
+          );
+        } else {
+          throw new Error(
+            getColorStr(
+              'Что-то пошло не так...Вопросы в базе данных отсутствуют',
+              'bgRedBright',
+            ),
+          );
         }
-      }
-
-      if (store.isInvalidValue) {
-        pos(8, 0);
-        write(
-          getColorStr(
-            'Вы ввели не допустимое значение, пожалуйста повторите',
-            'red',
-          ),
+      } catch (error) {
+        throw new Error(
+          getColorStr(`Ошибка при старте КВИЗА: ${error}`, 'bgRedBright'),
         );
-      }
-
-      pos(9, 0);
-      outputAnswerOptions(options);
-      pos(9 + options.length, 0);
-      const answer = await rl.question(getColorStr('Ваш ответ: '), 'blue');
-
-      if (isNaN(answer) || +answer < 1 || +answer > limit) {
-        store.isInvalidValue = true;
-        progressBar({ current, allQuestion, limit });
-      } else {
-        store.isInvalidValue = false;
       }
     };
 
-    progressBar({ current: 4, allQuestion: 18, limit: 4 });
+    const getAnswerCorrect = () => {
+      try {
+        if (store.correctAnswers.length > 0) {
+          write(getColorStr('Вопросы на которые был дан верный ответ', 'blue'));
+          store.correctAnswers.forEach(item => outputQuestionAnswers(item));
+        } else {
+          write(getColorStr('Вы ответили на все вопросы не верно', 'red'));
+        }
+      } catch (error) {
+        throw new Error(
+          getColorStr(
+            `Ошибка при запросе вопросов на которые даны правильные ответы: ${error}`,
+            'bgRedBright',
+          ),
+        );
+      }
+    };
+
+    const getAnswerInCorrect = () => {
+      try {
+        if (store.incorrectAnswers.length > 0) {
+          write(
+            getColorStr('Вопросы на которые был дан неверный ответ', 'blue'),
+          );
+          store.incorrectAnswers.forEach(item => outputQuestionAnswers(item));
+        } else {
+          write(getColorStr('Вы ответили на все вопросы верно!', 'green'));
+        }
+      } catch (error) {
+        throw new Error(
+          getColorStr(
+            `Ошибка при запросе вопросов на которые даны неправильные ответы: ${error}`,
+            'bgRedBright',
+          ),
+        );
+      }
+    };
+
+    const commands = {
+      help() {
+        write(
+          getColorStr(
+            `
+          comand "start" - запустит КВИЗ';
+          comand "result" - вывод текущего результата;
+          comand "answer" - вывод вопросов на которые были даны правильные ответы;
+          comand "answerErr" -  вывод вопросов на которые были даны неправильные ответы;
+          command "exit" - выход из приложения.
+          `,
+            'whiteBright',
+          ),
+        );
+      },
+      result() {
+        const res = declOfNum(
+          Math.round(
+            (store.correctAnswers.length / store.questions.length) * 100,
+          ),
+          ['процент', 'процента', 'процентов'],
+        );
+        write(getColorStr(`Вы ответили правильно на ${res} из 100%`, 'green'));
+      },
+      start() {
+        start();
+      },
+      answer() {
+        getAnswerCorrect();
+      },
+      answerErr() {
+        getAnswerInCorrect();
+      },
+      exit() {
+        store.userName = '';
+        store.questions = [];
+        store.correctAnswers = [];
+        store.incorrectAnswers = [];
+        store.current = 0;
+        rl.close();
+      },
+    };
+
+    rl.on('line', line => {
+      const command = commands[line];
+      if (command) {
+        command();
+      } else {
+        write(getColorStr('No command!!!!', 'bgRed'));
+        rl.prompt();
+      }
+    });
+
+    rl.on('close', () => {
+      write(getColorStr(getColorStr('See you\n', 'italic'), 'greenBright'));
+      process.exit();
+    });
   } catch (error) {
-    write(`Ошибка: ${error}`);
+    console.error(
+      getColorStr(`Ошибка выполнения скрипта: ${error}`, 'bgRedBright'),
+    );
   }
 };
 
