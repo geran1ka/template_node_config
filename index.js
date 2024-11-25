@@ -1,60 +1,32 @@
-import readline from 'node:readline/promises';
-import process from 'node:process';
+import { createFile } from 'fs-extra';
+import { access, constants, readFile, writeFile } from 'node:fs/promises';
 
-// const rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout,
-//   prompt: '> ',
-// });
+const pathF = './tod.json';
 
-// console.log('Hello, your name: ');
-// rl.prompt(); // вывод для приглашения ввода
+const data = [];
+try {
+  await access(pathF, constants.F_OK);
+  console.log('файл есть');
+  data.push(...JSON.parse(await readFile(pathF, 'utf-8')));
+} catch (error) {
+  console.log('нет');
+  createFile(pathF);
+}
 
-// rl.on('line', answer => {
-//   console.log(`Hello, ${answer}`);
-// rl.close(); //закрыть readline
-// });
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  prompt: '> ',
-});
-
-console.log('Write command');
-console.log('or help: ');
-
-rl.prompt();
-
-const commands = {
-  help() {
-    console.log('help', 'time', 'date', 'exit');
-    rl.prompt();
-  },
-  time() {
-    const currentTime = new Date();
-    console.log(currentTime.toLocaleTimeString());
-  },
-  date() {
-    const currentTime = new Date();
-    console.log(currentTime.toLocaleDateString());
-  },
-  exit() {
-    rl.close();
-  },
-};
-
-rl.on('line', line => {
-  const command = commands[line];
-  if (command) {
-    command();
-  } else {
-    console.log('No command!!!');
+const createMessage = async (message) => {
+  const obj = {
+    id: Math.random().toString().substring(2),
+    todo: message,
+    status: false
   }
-  rl.prompt();
-});
 
-rl.on('close', () => {
-  console.log('See you');
-  process.exit();
-});
+  data.push(obj);
+  await writeFile(pathF, JSON.stringify(data))
+}
+
+createMessage('Собрать ПК')
+createMessage('Собрать ПК1')
+createMessage('Собрать ПК2')
+console.log('data: ', data);
+
+
