@@ -3,10 +3,22 @@ export const argsParse = ([, , ...argv], words = []) => {
 
   for (const key of words) {
     args[key] = key === argv[0];
-  }
 
-  if (words.includes(argv[0])) {
-    args[argv[0]] = true;
+    if (args[key] && argv[0] === 'add') {
+      args[key] = { task: argv[1] };
+    }
+
+    if (args[key] && (argv[0] === 'get' || argv[0] === 'delete')) {
+      args[key] = { id: argv[1] };
+    }
+
+    if (args[key] && argv[0] === 'update') {
+      args[key] = { id: argv[1], newTask: argv[2] || '' };
+    }
+
+    if (args[key] && argv[0] === 'status') {
+      args[key] = { id: argv[1], newStatus: argv[2] || '' };
+    }
   }
 
   for (let i = 0; i < argv.length; i++) {
