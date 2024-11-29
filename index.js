@@ -11,6 +11,10 @@ import { updateTodo } from './modules/service/updateTodo.js';
 import { write } from './modules/write.js';
 import { argsParse } from './util/argsParse.js';
 import { getTodoList } from './util/getTodoList.js';
+import { getOptions } from './modules/settings/getOptions.js';
+import { homeDir } from './modules/service/homeDir.js';
+import { homedir } from 'node:os';
+import { resetDir } from './modules/service/resetDir.js';
 
 const app = async () => {
   try {
@@ -21,6 +25,8 @@ const app = async () => {
       'update',
       'status',
       'delete',
+      'homeDir',
+      'resetDir',
     ]);
 
     if (args.h || args.help) {
@@ -34,50 +40,76 @@ const app = async () => {
         update <id> <newTask>   | обновить задачу с указанным идентификатором
         status <id> <newStatus> | обновить статус задачи с указанным идентификатором
         delete <id>             | удалить задачу с указанным идентификатором
+        homeDir                 | сохранять файл todo.json в директории ${homedir()}
+        resetDir                | сбросить настройки по сохранеию файла todo.json к стандартным
         `,
           'blue',
         ),
       );
-      return;
+      process.exit();
     }
 
-    const todoPath = './todo.json';
-    const check = await isTodoFile(todoPath);
+    const options = await getOptions();
+    const { filePathTask } = options;
+
+    if (args.homeDir) {
+      await homeDir(options);
+      process.exit();
+    }
+
+    if (args.resetDir) {
+      await resetDir(options);
+      process.exit();
+    }
+
+    const check = await isTodoFile(filePathTask);
 
     if (!check) {
-      createFile(todoPath);
+      createFile(filePathTask);
     }
 
-    const todolist = await getTodoList(todoPath);
+    const todolist = await getTodoList(filePathTask);
 
     if (args.add) {
-      addTodo({ list: todolist, data: args.add, path: todoPath });
-      return;
+      await addTodo({ list: todolist, data: args.add, path: filePathTask });
+      process.exit();
     }
 
     if (args.list) {
       getList(todolist);
-      return;
+      process.exit();
     }
 
     if (args.get) {
       getTodo({ list: todolist, data: args.get });
-      return;
+      process.exit();
     }
 
     if (args.update) {
-      updateTodo({ list: todolist, data: args.update, path: todoPath });
-      return;
+      await updateTodo({
+        list: todolist,
+        data: args.update,
+        path: filePathTask,
+      });
+      process.exit();
     }
 
     if (args.status) {
-      updateTodo({ list: todolist, data: args.status, path: todoPath });
-      return;
+      await updateTodo({
+        list: todolist,
+        data: args.status,
+        path: filePathTask,
+      });
+      process.exit();
     }
 
     if (args.delete) {
-      deleteTodo({ list: todolist, data: args.delete, path: todoPath });
-      return;
+      await deleteTodo({
+        list: todolist,
+        data: args.delete,
+        path: filePathTask,
+      });
+      process.exit();
     }
 
     write(
@@ -86,9 +118,10 @@ const app = async () => {
         'red',
       ),
     );
-    return;
+    process.exit();
   } catch (error) {
     write(getColorStr(`Ошибка при выполненение программы: ${error}`, 'red'));
+    process.exit();
   }
 };
 

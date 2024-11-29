@@ -5,9 +5,11 @@ export const outputConsole = ({ id, status, task }) =>
   write(
     getColorStr(
       `${id}. [${status}] ${task}.`,
-      status.toLowerCase() === 'выполнена' ||
-        status.toLowerCase() === 'завершена' ?
-        'green' :
-        'yellow',
+      status.trim().toLowerCase().includes('выполн') ||
+        status.trim().toLowerCase().includes('завершен') ||
+        status.trim().toLowerCase().includes('готов') ||
+        status.trim().toLowerCase().includes('ready')
+        ? 'green'
+        : 'yellow',
     ),
   );
