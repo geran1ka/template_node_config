@@ -1,126 +1,85 @@
-#!/usr/bin/env/ node
-
 import { getColorStr } from './modules/colors.js';
-import { createFile } from './modules/files/createFile.js';
-import { isTodoFile } from './modules/files/isTodoFile.js';
-import { addTodo } from './modules/service/addTodo.js';
-import { deleteTodo } from './modules/service/deleteTodo.js';
-import { getList } from './modules/service/getList.js';
-import { getTodo } from './modules/service/getTodo.js';
-import { updateTodo } from './modules/service/updateTodo.js';
+import { argsParse } from './modules/util/argsParse.js';
 import { write } from './modules/write.js';
-import { argsParse } from './util/argsParse.js';
-import { getTodoList } from './util/getTodoList.js';
-import { getOptions } from './modules/settings/getOptions.js';
-import { homeDir } from './modules/service/homeDir.js';
-import { homedir } from 'node:os';
-import { resetDir } from './modules/service/resetDir.js';
+import { getSetting, saveSetting } from './modules/service/setting.service.js';
+import { getUserAnswerOptions, setOptions } from './modules/service/options.js';
+import { replaceText } from './modules/service/replaceText.js';
 
 const app = async () => {
   try {
-    const args = argsParse(process.argv, [
-      'add',
-      'list',
-      'get',
-      'update',
-      'status',
-      'delete',
-      'homeDir',
-      'resetDir',
-    ]);
+    const args = argsParse(process.argv, ['set']);
 
     if (args.h || args.help) {
       write(
         getColorStr(
           `
         -h или --help           | вывести список команд
-        add <task>              | добавить новую задачу
-        list                    | вывести список всех задач
-        get <id>                | вывести информацию о задаче с указанным идентификатором
-        update <id> <newTask>   | обновить задачу с указанным идентификатором
-        status <id> <newStatus> | обновить статус задачи с указанным идентификатором
-        delete <id>             | удалить задачу с указанным идентификатором
-        homeDir                 | сохранять файл todo.json в директории ${homedir()}
-        resetDir                | сбросить настройки по сохранеию файла todo.json к стандартным
+        -i                      | поиск не зависит от регистра
+        set                     | сохраняет настройки поиска -i
         `,
           'blue',
         ),
       );
+      return;
+    }
+
+    const settingsCli = {
+      i: false,
+    };
+
+    if (!args.set) {
+      const setting = await getSetting(settingsCli);
+      Object.assign(settingsCli, setting);
+    }
+
+    if (args.i) {
+      settingsCli.i = args.i;
+    }
+
+    if (args.set) {
+      const setting = await setOptions();
+      Object.assign(settingsCli, setting);
+      await saveSetting(settingsCli);
       process.exit();
     }
-
-    const options = await getOptions();
-    const { filePathTask } = options;
-
-    if (args.homeDir) {
-      await homeDir(options);
-      process.exit();
-    }
-
-    if (args.resetDir) {
-      await resetDir(options);
-      process.exit();
-    }
-
-    const check = await isTodoFile(filePathTask);
-
-    if (!check) {
-      createFile(filePathTask);
-    }
-
-    const todolist = await getTodoList(filePathTask);
-
-    if (args.add) {
-      await addTodo({ list: todolist, data: args.add, path: filePathTask });
-      process.exit();
-    }
-
-    if (args.list) {
-      getList(todolist);
-      process.exit();
-    }
-
-    if (args.get) {
-      getTodo({ list: todolist, data: args.get });
-      process.exit();
-    }
-
-    if (args.update) {
-      await updateTodo({
-        list: todolist,
-        data: args.update,
-        path: filePathTask,
-      });
-      process.exit();
-    }
-
-    if (args.status) {
-      await updateTodo({
-        list: todolist,
-        data: args.status,
-        path: filePathTask,
-      });
-      process.exit();
-    }
-
-    if (args.delete) {
-      await deleteTodo({
-        list: todolist,
-        data: args.delete,
-        path: filePathTask,
-      });
-      process.exit();
-    }
+    const optionsCLI = {
+      dirname: '',
+      textFind: '',
+      textReplace: '',
+    };
 
     write(
       getColorStr(
-        'Введенной команды не существует, воспользуйтесь командой -h или  --help',
-        'red',
+        'Добро пожаловать в приложение по поиску и замене слов в текстовых файлах\n',
+        'blue',
       ),
     );
+
+    const { dirname, textFind, textReplace } =
+      await getUserAnswerOptions(optionsCLI);
+
+    const res = await replaceText({
+      dirname,
+      textFind,
+      textReplace,
+      settingsCli,
+    });
+    if (res) {
+      write(
+        getColorStr(
+          `Замена ${textFind} на ${textReplace} в директории ${dirname} - прошла успешно!`,
+          'green',
+        ),
+      );
+    }
     process.exit();
   } catch (error) {
-    write(getColorStr(`Ошибка при выполненение программы: ${error}`, 'red'));
+    write(
+      getColorStr(
+        `Во время выполнения скрипта произошла ошибка: ${error}`,
+        'bgRed',
+      ),
+    );
     process.exit();
   }
 };
