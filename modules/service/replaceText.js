@@ -4,6 +4,7 @@ import { write } from '../write.js';
 import { getColorStr } from '../colors.js';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 export const replaceText = async ({
   dirName,
@@ -42,14 +43,8 @@ export const replaceText = async ({
           callback(null, tChunk);
         },
       });
-      await new Promise((resolve, reject) => {
-        rStream
-          .pipe(tStream)
-          .pipe(wStream)
-          .on('finish', resolve)
-          .on('error', reject);
-      });
 
+      await pipeline(rStream, tStream, wStream);
       await rename(pathFileTemp, pathFile);
 
       write(getColorStr(`Обработан файл ${file}`));
