@@ -1,6 +1,6 @@
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
-import { readdir } from 'node:fs/promises';
+import { access } from 'node:fs/promises';
 import { getColorStr } from '../colors.js';
 import { write } from '../write.js';
 
@@ -17,9 +17,7 @@ export const getUserAnswerOptions = async () => {
         'green',
       ),
     );
-    if (await readdir(dirname)) {
-      console.log('2');
-    }
+    await access(dirname);
 
     const textFind = await rl.question(
       getColorStr('Введите текст который хотите заменить: ', 'green'),
@@ -31,7 +29,7 @@ export const getUserAnswerOptions = async () => {
     return { dirname, textFind, textReplace };
   } catch {
     write(getColorStr('Указанная дирекория не существует', 'bgRed'));
-    await getUserAnswerOptions();
+    return await getUserAnswerOptions();
   }
 };
 
