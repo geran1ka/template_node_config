@@ -43,7 +43,7 @@ const app = async () => {
       process.exit();
     }
     const optionsCLI = {
-      dirname: '',
+      dirName: '',
       textFind: '',
       textReplace: '',
     };
@@ -55,11 +55,13 @@ const app = async () => {
       ),
     );
 
-    const { dirname, textFind, textReplace } =
+    const { dirName, textFind, textReplace } =
       await getUserAnswerOptions(optionsCLI);
 
+    console.log('dirName: ', dirName);
+
     const res = await replaceText({
-      dirname,
+      dirName,
       textFind,
       textReplace,
       settingsCli,
@@ -67,7 +69,7 @@ const app = async () => {
     if (res) {
       write(
         getColorStr(
-          `Замена ${textFind} на ${textReplace} в директории ${dirname} - прошла успешно!`,
+          `Замена ${textFind} на ${textReplace} в директории ${dirName} - прошла успешно!`,
           'green',
         ),
       );

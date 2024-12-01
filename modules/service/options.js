@@ -1,6 +1,6 @@
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
-import { readdir } from 'node:fs/promises';
+import { access } from 'node:fs/promises';
 import { getColorStr } from '../colors.js';
 import { write } from '../write.js';
 
@@ -11,15 +11,13 @@ const rl = createInterface({
 
 export const getUserAnswerOptions = async () => {
   try {
-    const dirname = await rl.question(
+    const dirName = await rl.question(
       getColorStr(
         'Введите наименование директории где находятся файлы: ',
         'green',
       ),
     );
-    if (await readdir(dirname)) {
-      console.log('2');
-    }
+    await access(dirName);
 
     const textFind = await rl.question(
       getColorStr('Введите текст который хотите заменить: ', 'green'),
@@ -28,10 +26,10 @@ export const getUserAnswerOptions = async () => {
     const textReplace = await rl.question(
       getColorStr('Введите текст который хотите вставить: ', 'green'),
     );
-    return { dirname, textFind, textReplace };
+    return { dirName, textFind, textReplace };
   } catch {
     write(getColorStr('Указанная дирекория не существует', 'bgRed'));
-    await getUserAnswerOptions();
+    return await getUserAnswerOptions();
   }
 };
 

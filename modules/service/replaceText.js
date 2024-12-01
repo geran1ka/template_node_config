@@ -1,16 +1,18 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { write } from '../write.js';
 import { getColorStr } from '../colors.js';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { Transform } from 'node:stream';
 
 export const replaceText = async ({
-  dirname,
+  dirName,
   textFind,
   textReplace,
   settingsCli,
 }) => {
   try {
-    const files = (await readdir(dirname)).filter(
+    const files = (await readdir(dirName)).filter(
       file => path.extname(file) === '.txt',
     );
 
@@ -19,7 +21,7 @@ export const replaceText = async ({
     if (!files.length) {
       write(
         getColorStr(
-          `В указанной директории ${dirname} нет текстовых файлов`,
+          `В указанной директории ${dirName} нет текстовых файлов`,
           'blue',
         ),
       );
@@ -29,10 +31,26 @@ export const replaceText = async ({
     const pattern = new RegExp(textFind, `g${settingsCli.i ? 'i' : ''}`);
 
     for (const file of files) {
-      const pathFile = path.join(dirname, file);
-      const text = await readFile(pathFile, 'utf-8');
-      const newText = text.replaceAll(pattern, textReplace);
-      await writeFile(pathFile, newText, 'utf-8');
+      const pathFile = path.join(dirName, file);
+      const pathFileTemp = pathFile + '.tmp';
+
+      const rStream = createReadStream(pathFile, { encoding: 'utf-8' });
+      const wStream = createWriteStream(pathFileTemp);
+      const tStream = new Transform({
+        transform(chunk, encoding, callback) {
+          const tChunk = chunk.toString().replaceAll(pattern, textReplace);
+          callback(null, tChunk);
+        },
+      });
+      await new Promise((resolve, reject) => {
+        rStream
+          .pipe(tStream)
+          .pipe(wStream)
+          .on('finish', resolve)
+          .on('error', reject);
+      });
+
+      await rename(pathFileTemp, pathFile);
 
       write(getColorStr(`Обработан файл ${file}`));
     }
