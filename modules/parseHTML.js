@@ -1,33 +1,28 @@
 import { getColorStr } from './util/colors.js';
 import { write } from './util/write.js';
+import { JSDOM } from 'jsdom';
 
 export const parseHTML = data => {
-  const headersRegexp = /<h([1-6])>.*?<\/h([1-6])>/gi;
-  const linksRegexp = /<a href="[^"]*" .*?>.*?<\/a>/gi;
+  const dom = new JSDOM(data);
+  const document = dom.window.document;
 
-  const headers = data.match(headersRegexp);
-  const links = data.match(linksRegexp);
+  write(getColorStr('Заголовки:', 'magenta'));
+  const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  headings.forEach((heading, index) => {
+    write(
+      getColorStr(
+        `${index + 1}. ${heading.tagName}: ${heading.textContent.trim()}`,
+        'green',
+      ),
+    );
+  });
 
-  if (headers) {
-    headers.forEach((header, i) => {
-      write(
-        `${getColorStr(i + 1, 'white')}. ${getColorStr(header.replace(/<[^>]+>/gi, ''), 'green')}`,
-      );
-    });
-  } else {
-    write(getColorStr('Заголовки не найдены', 'red'));
-  }
+  write(getColorStr('Ссылки:', 'magenta'));
+  const links = Array.from(document.querySelectorAll('a'));
 
-  if (links) {
-    links.forEach((link, i) => {
-      write(
-        `${i + 1}. URL: ${getColorStr(link.match(/href="([^"]*)"/i)[1], 'blue')}. Контент: ${getColorStr(
-          link.replace(/<[^>]+>/gi, ''),
-          'green',
-        )}`,
-      );
-    });
-  } else {
-    write(getColorStr('Ссылки не найдены', 'red'));
-  }
+  links.forEach((link, index) => {
+    const href = link.getAttribute('href') || 'Нет ссылки';
+    const text = link.textContent.trim() || 'Нет текста';
+    write(getColorStr(`${index + 1}. URL: ${href}, Текст: "${text}"`, 'blue'));
+  });
 };
