@@ -7,11 +7,11 @@ export const parseHTML = data => {
   const document = dom.window.document;
 
   write(getColorStr('Заголовки:', 'magenta'));
-  const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-  headings.forEach((heading, index) => {
+  const headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  headers.forEach((header, index) => {
     write(
       getColorStr(
-        `${index + 1}. ${heading.tagName}: ${heading.textContent.trim()}`,
+        `${index + 1}. ${header.tagName}: ${header.textContent.trim()}`,
         'green',
       ),
     );
